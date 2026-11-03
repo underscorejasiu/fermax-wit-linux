@@ -1,0 +1,27 @@
+#!/bin/sh
+# The WebKit renderer with the HA dashboard grows by ~35 MB/h. We restart the kiosk when the screen has been
+# blanked for at least IDLE_MIN minutes and the kiosk (anonymous memory + swap) has exceeded LIMIT_MB.
+# The restart takes ~30 s and does not turn the backlight on. Run every minute by kiosk-recycle.timer.
+LIMIT_MB=${LIMIT_MB:-300}
+IDLE_MIN=${IDLE_MIN:-5}
+BL=/sys/class/backlight/backlight/bl_power
+CG=/sys/fs/cgroup/user.slice/user-1000.slice
+STATE=/run/kiosk-recycle.blanked
+
+# The marker is created on the first read of a blanked screen; its time = start of blanking
+if [ "$(cat $BL)" != 4 ]; then
+	rm -f $STATE
+	exit 0
+fi
+[ -e $STATE ] || touch $STATE
+# find rounds the age up to whole minutes: +N means "longer than N minutes"
+[ -n "$(find $STATE -mmin +$IDLE_MIN)" ] || exit 0
+
+anon=$(awk '$1 == "anon" { print int($2 / 1048576) }' $CG/memory.stat)
+swap=$(($(cat $CG/memory.swap.current) / 1048576))
+[ $((anon + swap)) -gt "$LIMIT_MB" ] || exit 0
+
+echo "screen blanked, kiosk uses ${anon}M + ${swap}M swap > ${LIMIT_MB}M: restarting"
+systemctl restart meetme-kiosk
+# Next restart only after another IDLE_MIN minutes of blanking
+touch $STATE

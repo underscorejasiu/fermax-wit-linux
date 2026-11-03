@@ -1,0 +1,8 @@
+[Match]
+Name=en* eth* lan*
+
+[Network]
+DHCP=yes
+
+[DHCPv4]
+RouteMetric=100

@@ -1,0 +1,11 @@
+[Unit]
+Description=Blank screen backlight after 20 s without touch (or 1 s hold in bottom-right corner)
+After=meetme-kiosk.service
+
+[Service]
+ExecStart=/usr/local/bin/screen-blank -t 20
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=graphical.target

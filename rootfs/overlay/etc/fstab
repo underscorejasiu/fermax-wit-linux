@@ -1,0 +1,1 @@
+LABEL=meetme-root / ext4 defaults,noatime,commit=60,x-systemd.growfs 0 1

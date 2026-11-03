@@ -1,0 +1,12 @@
+#!/bin/sh
+# After a WebKit renderer crash, cog shows a "Crash!" page and waits for a click.
+# We detect that message in the journal and restart the kiosk.
+journalctl -f -n 0 -o cat _COMM=cog | while read -r line; do
+	case "$line" in
+	*"renderer process crashed"*)
+		echo "renderer crashed, restarting kiosk"
+		sleep 2
+		systemctl restart meetme-kiosk
+		;;
+	esac
+done

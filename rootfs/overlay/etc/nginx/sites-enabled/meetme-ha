@@ -1,0 +1,52 @@
+# Local proxy to Home Assistant for the kiosk: http://localhost:8080 -> HA.
+# A script is injected into the HTML page that stores the long-lived token where the HA frontend
+# keeps its session after login (localStorage "hassTokens"), so the kiosk never shows a login page.
+# The "ha-upstream" lines get HA_URL from site/site.conf (installer/provision.sh).
+map $http_upgrade $connection_upgrade {
+	default upgrade;
+	''      close;
+}
+
+server {
+	listen 127.0.0.1:8080;
+
+	# Lightweight camera view for the dashboard (iframe card)
+	location /meetme/ {
+		alias /usr/local/share/meetme/;
+		# Without this WebKit kept an old copy of the page, even after a kiosk restart
+		add_header Cache-Control "no-cache";
+	}
+
+	# "Blank screen" button: the screen-blank daemon listens on 127.0.0.1 only
+	location = /meetme/blank {
+		proxy_pass http://127.0.0.1:8099;
+	}
+
+	# "Camera preview" button: the intercom opens the window with the panel video
+	location = /meetme/monitor {
+		proxy_pass http://127.0.0.1:8098/monitor;
+	}
+
+	# Camera snapshots: nginx adds the token, the browser does not need it
+	location /api/camera_proxy/ {
+		proxy_pass HOME_ASSISTANT_URL; # ha-upstream
+		include /etc/nginx/meetme-ha-auth.conf;
+	}
+
+	location / {
+		proxy_pass HOME_ASSISTANT_URL; # ha-upstream
+		proxy_http_version 1.1;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection $connection_upgrade;
+		# sub_filter only works on uncompressed responses
+		proxy_set_header Accept-Encoding "";
+		proxy_read_timeout 1d;
+
+		sub_filter_types text/html;
+		sub_filter_once on;
+		# sub_filter '<head>' '<head><script>...token...</script>' (root-only file)
+		include /etc/nginx/meetme-ha-token.conf;
+		# 8 px margin: the monitor bezel covers the panel edges
+		sub_filter '</head>' '<style>home-assistant{position:fixed!important;inset:8px!important;display:block!important;overflow:hidden!important}</style></head>';
+	}
+}

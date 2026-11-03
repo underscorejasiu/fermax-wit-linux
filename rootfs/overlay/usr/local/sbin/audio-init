@@ -1,0 +1,22 @@
+#!/bin/sh
+# Playback path: DAC -> HP output -> speaker amplifier (PH9); capture: MIC1 (stereo only)
+a() { amixer -q -c sun8ia33audio cset name="$1" $2; }
+a 'AIF1 Slot 0 Digital DAC Playback Switch' on,on
+a 'AIF1 DA0 Playback Volume' 160,160
+a 'DAC Playback Switch' on,on
+a 'DAC Playback Volume' 160,160
+a 'Headphone Source Playback Route' DAC,DAC
+a 'Headphone Playback Switch' on,on
+# The speaker and microphone are close together in the enclosure: at 63/6 a call with the panel fell into feedback
+# (2.2-2.4 kHz squeal through the speaker -> microphone -> panel loop); 48/4 measured free of continuous squeal
+a 'Headphone Playback Volume' 48
+a 'AIF1 Data Digital ADC Capture Switch' on,on
+a 'AIF1 Slot 0 Digital ADC Capture Switch' on,on
+a 'ADC Capture Volume' 168,168
+a 'AIF1 AD0 Capture Volume' 160,160
+a 'ADC Gain Capture Volume' 3
+a 'Mic1 Boost Volume' 4
+a 'Mic1 Capture Switch' on,on
+a 'Mic1 Playback Switch' off,off
+a 'Mic2 Playback Switch' off,off
+exit 0

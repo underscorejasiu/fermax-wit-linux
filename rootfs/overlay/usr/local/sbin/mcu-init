@@ -1,0 +1,13 @@
+#!/bin/sh
+# Link to the I/O board MCU (APM32, UART2 = /dev/ttyS1, 38400 8N1), protocol from the original dnake_control.
+# Frame: a7 <len> 00 <cmd> <data...> <xor>. The MCU powers the USB hub (Ethernet) after ~2 s of regular
+# heartbeat (cmd b0). We do not send the rest of Android's startup sequence: with the rest of the
+# exchange the hub power-up was blocked.
+T=${MCU_TTY:-/dev/ttyS1}
+stty -F "$T" 38400 raw -echo -crtscts
+# The MCU sometimes replies; read in the background so the buffer does not fill up
+cat "$T" > /dev/null &
+while true; do
+	printf '\247\005\000\260\022' > "$T"
+	sleep 1
+done

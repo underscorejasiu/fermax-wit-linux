@@ -1,0 +1,30 @@
+#!/bin/sh
+# Fixed NIC MAC addresses, as in Android. The r8152 NICs on the I/O board have factory
+# 00:e0:99:... addresses, and Android set the BC:F8:... ones in software on every boot (sys_net.xml:
+# eth0 = the given address, eth1 = third byte + 1). The NIC keeps the last address only until power is cut.
+# Writes systemd .link files (NIC in USB port 1.1 = lan0, 1.2 = lan1).
+# Usage: meetme-set-mac BC:F8:11:12:34:56 [root_dir]   (root dir: used by the installer in the initramfs)
+set -e
+MAC=$(echo "${1:?give the eth0 MAC from Android}" | tr 'A-F' 'a-f')
+R=${2:-}
+echo "$MAC" | grep -qE '^([0-9a-f]{2}:){5}[0-9a-f]{2}$' || { echo "bad MAC: $MAC"; exit 1; }
+B3=$(printf '%02x' $(( 0x$(echo "$MAC" | cut -d: -f3) + 1 )))
+MAC1=$(echo "$MAC" | awk -F: -v b="$B3" '{print $1":"$2":"b":"$4":"$5":"$6}')
+D=$R/etc/systemd/network
+for n in 0 1; do
+	[ $n = 0 ] && m=$MAC || m=$MAC1
+	cat > "$D/10-meetme-lan$n.link" <<EOF
+# Fixed MAC from Android (meetme-set-mac): NIC in USB port 1.$((n + 1)) of the I/O board
+[Match]
+Path=platform-1c1a000.usb-usb-0:1.$((n + 1)):1.0
+
+[Link]
+Name=lan$n
+MACAddress=$m
+EOF
+done
+# Network configs must cover the new NIC names
+for f in "$D"/*.network; do
+	[ -f "$f" ] && grep -q "^Name=" "$f" && ! grep -q "lan\*" "$f" && sed -i 's/^Name=\(.*\)$/Name=\1 lan*/' "$f"
+done
+echo "lan0=$MAC lan1=$MAC1"

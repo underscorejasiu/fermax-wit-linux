@@ -1,0 +1,11 @@
+[Unit]
+Description=Restart kiosk after WebKit renderer crash
+After=meetme-kiosk.service
+
+[Service]
+ExecStart=/usr/local/sbin/kiosk-crash-watch
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target

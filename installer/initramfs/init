@@ -1,0 +1,34 @@
+#!/bin/busybox sh
+/bin/busybox --install -s
+mount -t proc proc /proc
+mount -t sysfs sys /sys
+mount -t devtmpfs dev /dev
+mkdir -p /dev/pts && mount -t devpts devpts /dev/pts
+mount -t debugfs none /sys/kernel/debug 2>/dev/null
+hostname meetme
+echo "=== Fermax MEET ME: Linux $(uname -r) from RAM ===" > /dev/tty1
+for m in /lib/modules/*.ko; do [ -e "$m" ] && insmod "$m"; done
+# shell on the USB console (g_serial -> /dev/ttyACM0 on the PC) and on the screen
+( while true; do setsid sh -c 'exec sh </dev/ttyGS0 >/dev/ttyGS0 2>&1'; sleep 1; done ) &
+# Install without USB (SD card boot, meetme.install=net): network and a shell for the PC
+# via nc on port 2323, fixed install address 192.168.0.199 alongside DHCP
+if grep -q "meetme.install=net" /proc/cmdline; then
+	(
+		echo "=== installer: bringing up the network ===" > /dev/tty1
+		# DHCP may not answer: 192.168.0.199 goes on the NIC with a cable anyway, so the PC
+		# can always connect
+		/bin/meetme-install net > /tmp/net.log 2>&1
+		IF=
+		while [ -z "$IF" ]; do
+			for i in /sys/class/net/eth*; do
+				[ "$(cat "$i/carrier" 2>/dev/null)" = 1 ] && IF=$(basename "$i") && break
+			done
+			[ -n "$IF" ] || { sleep 3; /bin/meetme-install net >> /tmp/net.log 2>&1; }
+		done
+		ip addr add 192.168.0.199/24 dev "$IF" 2>/dev/null
+		echo "=== installer: $(cat /tmp/net.log), 192.168.0.199:2323 ===" > /dev/tty1
+		nc -ll -p 2323 -e /bin/sh
+	) &
+fi
+( while true; do setsid sh -c 'exec sh </dev/tty1 >/dev/tty1 2>&1'; sleep 1; done ) &
+while true; do sleep 3600; done

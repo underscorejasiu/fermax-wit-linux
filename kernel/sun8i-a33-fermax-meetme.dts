@@ -1,0 +1,185 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Fermax MEET ME 10" monitor (DNAKE v902, board "mio.wit.monitor 10inch")
+ * Allwinner A33, 512 MiB DDR3, 4 GB eMMC, AXP223, 1024x600 RGB panel,
+ * Silead GSL3680 touch, USB hub (GL850G) with 2x SR9900 Ethernet on usb1.
+ */
+
+/dts-v1/;
+#include "sun8i-a33.dtsi"
+#include "sun8i-reference-design-tablet.dtsi"
+
+/ {
+	model = "Fermax MEET ME 10";
+	compatible = "fermax,meetme", "allwinner,sun8i-a33";
+
+	aliases {
+		serial0 = &r_uart;
+		/* Stable names: SD card = mmcblk0, eMMC = mmcblk1 */
+		mmc0 = &mmc0;
+		mmc1 = &mmc2;
+	};
+
+	panel: panel {
+		compatible = "panel-dpi";
+		data-mapping = "rgb666";
+		width-mm = <155>;
+		height-mm = <86>;
+		backlight = <&backlight>;
+		enable-gpios = <&pio 7 7 GPIO_ACTIVE_HIGH>; /* PH7 */
+		power-supply = <&reg_dc1sw>;
+
+		/* Timings from the stock sys_config.fex [lcd0_para] */
+		panel-timing {
+			clock-frequency = <52000000>;
+			hactive = <1024>;
+			vactive = <600>;
+			hfront-porch = <162>;
+			hback-porch = <138>;
+			hsync-len = <20>;
+			vfront-porch = <12>;
+			vback-porch = <20>;
+			vsync-len = <3>;
+			hsync-active = <0>;
+			vsync-active = <0>;
+			de-active = <1>;
+			pixelclk-active = <1>;
+		};
+
+		port {
+			panel_input: endpoint {
+				remote-endpoint = <&tcon0_out_lcd>;
+			};
+		};
+	};
+};
+
+&de {
+	status = "okay";
+};
+
+&tcon0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&lcd_rgb666_pins>;
+	status = "okay";
+};
+
+&tcon0_out {
+	tcon0_out_lcd: endpoint@0 {
+		reg = <0>;
+		remote-endpoint = <&panel_input>;
+	};
+};
+
+/* USB host to the I/O board: GL850G hub + 2x SR9900 Ethernet */
+&ehci0 {
+	status = "okay";
+};
+
+&ohci0 {
+	status = "okay";
+};
+
+&usbphy {
+	usb1_vbus-supply = <&reg_dldo1>;
+};
+
+&mmc2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc2_8bit_pins>;
+	vmmc-supply = <&reg_dcdc1>;
+	bus-width = <8>;
+	non-removable;
+	cap-mmc-hw-reset;
+	status = "okay";
+};
+
+&touchscreen {
+	compatible = "silead,gsl3680", "silead,gsl1680";
+	firmware-name = "gsl3680-fermax-meetme.fw";
+	/* Raw range measured by touching the corners; axes already match the panel */
+	touchscreen-size-x = <1780>;
+	touchscreen-size-y = <1024>;
+	vddio-supply = <&reg_ldo_io1>;
+	status = "okay";
+};
+
+/* Stock: ctp_power_ldo = axp22_ldoio1 @ 3.0 V, kept on while Android runs */
+&reg_ldo_io1 {
+	regulator-always-on;
+	regulator-min-microvolt = <3000000>;
+	regulator-max-microvolt = <3000000>;
+};
+
+/* Stock firmware powers eldo1 ("wifi_power", 3.3 V at runtime); dldo1 is off there */
+&reg_dldo1 {
+	regulator-always-on;
+};
+
+&reg_eldo1 {
+	regulator-always-on;
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-usb-hub";
+};
+
+/* UARTs used by stock firmware to talk to the I/O-board MCU (APM32F030) */
+&pio {
+	uart1_pg_rts_cts_pins: uart1-pg-rts-cts-pins {
+		pins = "PG8", "PG9";
+		function = "uart1";
+	};
+
+	uart2_pb_pins: uart2-pb-pins {
+		pins = "PB0", "PB1";
+		function = "uart2";
+	};
+};
+
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart1_pg_pins>, <&uart1_pg_rts_cts_pins>;
+	status = "okay";
+};
+
+&uart2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart2_pb_pins>;
+	status = "okay";
+};
+
+/ {
+	/* Speaker amplifier fed from the headphone output, enabled by PH9 (stock: audio_pa_ctrl) */
+	speaker_amp: audio-amplifier {
+		compatible = "simple-audio-amplifier";
+		enable-gpios = <&pio 7 9 GPIO_ACTIVE_HIGH>; /* PH9 */
+		sound-name-prefix = "Speaker Amp";
+	};
+};
+
+&codec {
+	status = "okay";
+};
+
+&dai {
+	status = "okay";
+};
+
+&sound {
+	simple-audio-card,aux-devs = <&codec_analog>, <&speaker_amp>;
+	simple-audio-card,widgets = "Microphone", "Internal Microphone",
+				    "Speaker", "Internal Speaker";
+	simple-audio-card,routing =
+		"Left DAC", "DACL",
+		"Right DAC", "DACR",
+		"ADCL", "Left ADC",
+		"ADCR", "Right ADC",
+		"HP", "HPCOM",
+		"Speaker Amp INL", "HP",
+		"Speaker Amp INR", "HP",
+		"Internal Speaker", "Speaker Amp OUTL",
+		"Internal Speaker", "Speaker Amp OUTR",
+		"MIC1", "Internal Microphone",
+		"Internal Microphone", "MBIAS";
+	status = "okay";
+};

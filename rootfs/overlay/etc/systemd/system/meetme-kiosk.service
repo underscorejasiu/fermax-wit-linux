@@ -1,0 +1,26 @@
+[Unit]
+Description=Kiosk browser (cage + cog)
+After=systemd-user-sessions.service network-online.target seatd.service nginx.service
+Wants=network-online.target seatd.service nginx.service
+Conflicts=getty@tty1.service
+
+[Service]
+User=kiosk
+PAMName=login
+TTYPath=/dev/tty1
+StandardInput=tty
+StandardOutput=journal
+StandardError=journal
+TTYReset=yes
+# systemd daje sesjom CAP_WAKE_ALARM jako ambient; bwrap (piaskownica WebKit) wtedy odmawia startu
+AmbientCapabilities=
+CapabilityBoundingSet=
+TTYVHangup=yes
+EnvironmentFile=/etc/default/meetme-kiosk
+Environment=XDG_RUNTIME_DIR=/run/user/1000 WLR_LIBINPUT_NO_DEVICES=1 COG_PLATFORM_NAME=wl
+ExecStart=/usr/bin/cage -d -- /usr/bin/cog --platform=wl "${KIOSK_URL}"
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=graphical.target

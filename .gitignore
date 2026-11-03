@@ -1,0 +1,11 @@
+# Downloads and build output
+/work/
+# Your home: settings, token, SSH keys
+/site/
+# Files from the original firmware (touch firmware, ring tone, boot0): never commit
+/vendor/
+__pycache__/
+*.pyc
+*.pcap
+*.img
+*.img.gz

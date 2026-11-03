@@ -1,0 +1,14 @@
+diff --git a/board/sunxi/board.c b/board/sunxi/board.c
+index 3d1afec7..ef68dbd3 100644
+--- a/board/sunxi/board.c
++++ b/board/sunxi/board.c
+@@ -653,7 +653,8 @@ void sunxi_board_init(void)
+ #endif
+ #endif	/* CONFIG_AXPxxx_POWER */
+ 	printf("DRAM:");
+-	gd->ram_size = sunxi_dram_init();
++	/* DRAM was already trained by the vendor boot0 (docs/dram-boot0-workaround.md): leave the controller alone */
++	gd->ram_size = 512 << 20;
+ 	printf(" %d MiB\n", (int)(gd->ram_size >> 20));
+ 	if (!gd->ram_size)
+ 		hang();

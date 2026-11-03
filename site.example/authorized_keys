@@ -1,0 +1,2 @@
+# Your SSH public key(s), e.g. the contents of ~/.ssh/id_ed25519.pub. Installed as
+# /root/.ssh/authorized_keys on every screen; the image itself has no keys and no root password.

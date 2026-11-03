@@ -1,0 +1,16 @@
+[Unit]
+Description=I/O board MCU link (powers USB hub and Ethernet, sends heartbeat)
+DefaultDependencies=no
+After=dev-ttyS1.device systemd-udevd.service
+Wants=dev-ttyS1.device
+Before=network-pre.target
+Wants=network-pre.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/mcu-init
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=sysinit.target

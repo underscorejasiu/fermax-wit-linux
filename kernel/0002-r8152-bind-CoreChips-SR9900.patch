@@ -1,0 +1,12 @@
+diff --git a/drivers/net/usb/r8152.c b/drivers/net/usb/r8152.c
+index f61686433..6ef1e2ef5 100644
+--- a/drivers/net/usb/r8152.c
++++ b/drivers/net/usb/r8152.c
+@@ -10434,6 +10434,7 @@ static const struct usb_device_id rtl8152_table[] = {
+ 	{ USB_DEVICE(VENDOR_ID_ASUS,    0x1976) },
+ 	{ USB_DEVICE(VENDOR_ID_TRENDNET, 0xe02b) },
+ 	{ USB_DEVICE(VENDOR_ID_TRENDNET, 0xe02c) },
++	{ USB_DEVICE(0x0fe6, 0x9900) },	/* CoreChips SR9900 */
+ 	{}
+ };
+ 

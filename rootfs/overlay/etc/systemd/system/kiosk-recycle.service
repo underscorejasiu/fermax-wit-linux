@@ -1,0 +1,7 @@
+[Unit]
+Description=Restart kiosk while the screen is blanked if WebKit grew too large
+After=meetme-kiosk.service screen-blank.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/kiosk-recycle

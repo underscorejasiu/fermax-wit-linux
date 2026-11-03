@@ -1,0 +1,2 @@
+# Page shown on the screen; installer/provision.sh sets it from KIOSK_PATH in site/site.conf
+KIOSK_URL=http://localhost:8080/

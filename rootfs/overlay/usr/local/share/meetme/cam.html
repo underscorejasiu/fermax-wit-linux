@@ -1,0 +1,62 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Camera</title>
+<style>
+	html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+	/* Canvas on its own layer underneath: in WPE the accelerated canvas covered the button */
+	canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; z-index: 0; }
+	#err { position: absolute; left: 8px; bottom: 6px; color: #fa0; font: 14px sans-serif; display: none; z-index: 1; }
+	#door {
+		position: absolute; right: 10px; bottom: 10px; z-index: 2; display: flex; align-items: center; gap: 8px;
+		padding: 10px 16px; border-radius: 22px; border: 0; color: #fff; background: rgba(21, 101, 192, .85);
+		font: 500 17px Roboto, "DejaVu Sans", sans-serif;
+	}
+	#door svg { width: 22px; height: 22px; fill: currentColor; }
+	#door:active { opacity: .7; }
+</style></head>
+<body>
+<canvas id="cam"></canvas>
+<div id="err">no picture</div>
+<!-- Touching the picture or the button: the intercom window with video from the panel and the entrance camera (only on
+     the intercom screen: /meetme/monitor is handled by the local nginx) -->
+<button id="door">
+	<svg viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4Z"/></svg>
+	Intercom
+</button>
+<script>
+// Camera view: a JPEG frame every ~1 s through the local nginx proxy (nginx adds the token).
+// Frames are drawn on a single canvas and released immediately. Previously every frame went into an <img>
+// under a new URL (?t=...) and WebKit kept them all in its cache: the kiosk
+// renderer grew to several hundred MB within a few hours.
+const cam = new URLSearchParams(location.search).get("camera") || "camera.front_door";
+const canvas = document.getElementById("cam"), ctx = canvas.getContext("2d");
+const err = document.getElementById("err");
+
+async function frame() {
+	const r = await fetch("/api/camera_proxy/" + cam, { cache: "no-store" });
+	if (!r.ok)
+		throw new Error(r.status);
+	const bmp = await createImageBitmap(await r.blob());
+	if (canvas.width !== bmp.width || canvas.height !== bmp.height) {
+		canvas.width = bmp.width;
+		canvas.height = bmp.height;
+	}
+	ctx.drawImage(bmp, 0, 0);
+	bmp.close();
+}
+
+// Next frame only after the previous one is drawn, so requests do not pile up
+async function loop() {
+	try {
+		await frame();
+		err.style.display = "none";
+		setTimeout(loop, 1000);
+	} catch (e) {
+		err.style.display = "block";
+		setTimeout(loop, 3000);
+	}
+}
+loop();
+
+document.body.addEventListener("click", () => fetch("/meetme/monitor", { cache: "no-store" }));
+</script>
+</body></html>

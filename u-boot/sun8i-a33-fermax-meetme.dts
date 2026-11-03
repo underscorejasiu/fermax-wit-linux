@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/* Fermax MEET ME 10": Q8 reference design plus the 8-bit eMMC on mmc2 */
+#include "sun8i-a33-q8-tablet.dts"
+
+/ {
+	model = "Fermax MEET ME 10";
+	compatible = "fermax,meetme", "allwinner,sun8i-a33";
+};
+
+&mmc2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc2_8bit_pins>;
+	vmmc-supply = <&reg_dcdc1>;
+	bus-width = <8>;
+	non-removable;
+	cap-mmc-hw-reset;
+	status = "okay";
+};

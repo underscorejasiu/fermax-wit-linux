@@ -1,0 +1,6 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#10203a;color:#fff;font-family:DejaVu Sans,sans-serif}
+#c{font-size:120px;font-weight:bold}#t{font-size:28px;opacity:.8}#d{position:fixed;width:40px;height:40px;border-radius:50%;background:#f80;transform:translate(-50%,-50%);display:none}
+</style></head><body><div id="c"></div><div id="t">Fermax MEET ME — Debian 13 + cog. Touch the screen.</div><div id="d"></div>
+<script>function u(){c.textContent=new Date().toLocaleTimeString("pl-PL")}u();setInterval(u,1000);
+addEventListener("pointerdown",e=>{d.style.display="block";d.style.left=e.clientX+"px";d.style.top=e.clientY+"px";t.textContent="Dotyk: "+Math.round(e.clientX)+", "+Math.round(e.clientY)})</script></body></html>
