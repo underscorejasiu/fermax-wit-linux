@@ -5,6 +5,17 @@ platform "WIT", Android board `v902`, Allwinner A33). The original Android 4.4 f
 slow and unmaintained; this project turns the screens into Home Assistant wall panels that are
 still fully working intercoms — instead of e-waste.
 
+## Why
+
+The goal of this project is less electronic waste and a second, better life for these devices.
+Fermax kept selling the MEET ME screens with Android 4.4 and an old vendor kernel, a platform that
+was already without support at the time of sale: no security updates, a browser that cannot run
+modern web apps, and no way for owners to update it themselves. The hardware is perfectly fine —
+a quad-core SoC, a good 10" touch screen, speaker, microphone and Ethernet — and it is built into
+walls and wired into the building's intercom. Replacing it means new hardware, new wiring and
+the old screens in the bin. This project keeps them on the wall, with a maintained operating
+system you control.
+
 What you get on every screen:
 
 - **Home Assistant kiosk**: your dashboard full screen, logged in with a token, touch, automatic
