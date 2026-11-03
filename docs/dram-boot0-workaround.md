@@ -69,3 +69,12 @@ the card before the next normal boot.
   stacks there and FEL dies (it looks like a USB problem, but is not).
 - A screen hung in FEL can take a PC's xHCI controller down with it; rebind it with
   `echo <pci-id> | sudo tee /sys/bus/pci/drivers/xhci_hcd/{unbind,bind}`.
+
+## Limits
+
+- The workaround boots the installer over USB (FEL). A screen with both this DRAM problem **and**
+  a dead USB port is not covered: the SD-card installer uses the mainline SPL. It would need an
+  SD card that chains boot0-fel → no-DRAM SPL → U-Boot from the card; not implemented.
+- `make-boot0-fel.py` checks the exact instruction it patches and refuses other boot0 versions.
+  boot0 was byte-identical on all six screens of the tested installation, so a copy from any
+  screen of the same model works (e.g. from a backup in `work/backup/*/mmcblk1boot0.img`).
